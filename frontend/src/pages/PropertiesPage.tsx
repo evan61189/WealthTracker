@@ -325,7 +325,7 @@ function UploadCSVModal({
         )}
 
         {parsed.length === 0 ? (
-          <div>
+          <div className="flex gap-8">
             <input
               ref={fileInputRef}
               type="file"
@@ -338,6 +338,24 @@ function UploadCSVModal({
               onClick={() => fileInputRef.current?.click()}
             >
               Choose CSV File
+            </button>
+            <button
+              className="btn-secondary"
+              onClick={() => {
+                const template = [
+                  "Holding Company,Address,Value,Debt Balance,Monthly Loan Payment,Lender,Rate,Maturity,% Ownership & Who",
+                  'ABC Holdings LLC,"123 Main St, Austin, TX 78701","$1,200,000","$800,000","$5,200",First National Bank,6.5%,01/15/2030,50% - John Smith',
+                ].join("\n");
+                const blob = new Blob([template], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "property_upload_template.csv";
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              Download Template
             </button>
           </div>
         ) : (
