@@ -46,8 +46,6 @@ export interface Account {
   balance: number;
   currency: string;
   is_liability: boolean;
-  plaid_account_id: string | null;
-  last_synced: string | null;
   created_at: string;
   updated_at: string;
 }

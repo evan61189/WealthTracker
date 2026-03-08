@@ -89,7 +89,7 @@ export default function AccountsPage() {
           <p className="text-muted">Loading...</p>
         ) : accountList.length === 0 ? (
           <p className="text-muted">
-            No accounts yet. Add one or connect via Plaid.
+            No accounts yet. Click "Add Account" to get started.
           </p>
         ) : (
           <table>
@@ -99,7 +99,6 @@ export default function AccountsPage() {
                 <th>Institution</th>
                 <th>Type</th>
                 <th className="text-right">Balance</th>
-                <th>Synced</th>
                 <th></th>
               </tr>
             </thead>
@@ -127,9 +126,6 @@ export default function AccountsPage() {
                   >
                     {acct.is_liability ? "-" : ""}
                     {formatCurrency(acct.balance)}
-                  </td>
-                  <td className="text-muted" style={{ fontSize: 12 }}>
-                    {acct.plaid_account_id ? "Plaid" : "Manual"}
                   </td>
                   <td>
                     <button

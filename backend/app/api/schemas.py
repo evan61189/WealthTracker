@@ -48,8 +48,6 @@ class AccountResponse(BaseModel):
     balance: float
     currency: str
     is_liability: bool
-    plaid_account_id: str | None
-    last_synced: datetime | None
     created_at: datetime
     updated_at: datetime
 
@@ -347,11 +345,3 @@ class NetWorthSummary(BaseModel):
     other_assets: float
 
 
-class PlaidLinkRequest(BaseModel):
-    public_token: str
-
-
-class PlaidLinkResponse(BaseModel):
-    access_token: str
-    item_id: str
-    accounts: list[AccountResponse]

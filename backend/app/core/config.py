@@ -15,11 +15,6 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@db.YOUR_PROJECT.supabase.co:5432/postgres"
     DATABASE_URL_SYNC: str = "postgresql://postgres:postgres@db.YOUR_PROJECT.supabase.co:5432/postgres"
 
-    # Plaid
-    PLAID_CLIENT_ID: str = ""
-    PLAID_SECRET: str = ""
-    PLAID_ENV: str = "sandbox"  # sandbox, development, production
-
     # CORS — Netlify production URL + local dev
     CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
     NETLIFY_URL: str = ""  # e.g., https://your-app.netlify.app

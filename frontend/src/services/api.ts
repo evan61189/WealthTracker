@@ -153,15 +153,3 @@ export const dashboard = {
   netWorth: () =>
     request<import("../types/api").NetWorthSummary>("/dashboard/net-worth"),
 };
-
-// Plaid
-export const plaid = {
-  getLinkToken: () =>
-    request<{ link_token: string }>("/plaid/link-token", { method: "POST" }),
-  exchangeToken: (publicToken: string) =>
-    request<import("../types/api").Account[]>(
-      `/plaid/exchange-token?public_token=${encodeURIComponent(publicToken)}`,
-      { method: "POST" }
-    ),
-  sync: () => request<{ synced: number }>("/plaid/sync", { method: "POST" }),
-};

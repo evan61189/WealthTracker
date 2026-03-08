@@ -1,16 +1,15 @@
 # WealthTracker
 
-A comprehensive wealth tracking application with advanced real estate valuation capabilities. Think Monarch Money, but with a powerful commercial real estate engine that handles cap rate valuations, lease type analysis (NNN, NN, Gross), rent escalation projections, and more.
+A comprehensive wealth tracking application with advanced real estate valuation capabilities. Track your net worth across all asset categories with a powerful commercial real estate engine that handles cap rate valuations, lease type analysis (NNN, NN, Gross), rent escalation projections, and more.
 
 ## Features
 
 ### Net Worth Dashboard
 - Complete net worth overview across all asset categories
 - Asset allocation pie chart and assets vs liabilities comparison
-- Real-time balance tracking via Plaid integration
+- Real-time balance tracking
 
 ### Financial Accounts
-- Connect bank accounts, credit cards, investment/retirement accounts via Plaid
 - Manual account entry for any account type
 - Historical balance snapshots for trend tracking
 - Supports: Checking, Savings, Credit Cards, Brokerage, 401(k), IRA, Roth IRA, HSA, Loans
@@ -48,7 +47,6 @@ A comprehensive wealth tracking application with advanced real estate valuation 
 - **Auth**: Supabase Auth
 - **Frontend**: React 19, TypeScript, Vite, Recharts
 - **Hosting**: Netlify (frontend), any Python host for backend (Railway, Render, Fly.io)
-- **Bank Integration**: Plaid API
 - **Styling**: Custom CSS with dark theme
 
 ## Getting Started
@@ -79,7 +77,7 @@ pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your Supabase credentials and Plaid keys
+# Edit .env with your Supabase credentials
 
 # Run migrations against Supabase PostgreSQL
 alembic upgrade head
@@ -112,13 +110,6 @@ The app will be available at `http://localhost:5173` with API proxied to `http:/
    - `VITE_SUPABASE_ANON_KEY`
    - `VITE_API_URL` (your deployed backend URL)
 
-### Plaid Setup
-
-1. Create a Plaid account at https://dashboard.plaid.com
-2. Get your `client_id` and `secret` from the Plaid dashboard
-3. Add them to the backend `.env` file
-4. Use `sandbox` environment for testing
-
 ## API Endpoints
 
 ### Auth
@@ -150,11 +141,6 @@ The app will be available at `http://localhost:5173` with API proxied to `http:/
 ### Dashboard
 - `GET /api/dashboard/net-worth` - Net worth summary
 
-### Plaid
-- `POST /api/plaid/link-token` - Get Plaid Link token
-- `POST /api/plaid/exchange-token` - Exchange public token
-- `POST /api/plaid/sync` - Sync all Plaid account balances
-
 ## Project Structure
 
 ```
@@ -164,7 +150,7 @@ WealthTracker/
 │   │   ├── api/          # Route handlers
 │   │   ├── core/         # Config, database, security
 │   │   ├── models/       # SQLAlchemy models
-│   │   ├── services/     # Business logic (valuation, Plaid)
+│   │   ├── services/     # Business logic (valuation)
 │   │   └── main.py       # FastAPI app
 │   ├── alembic/          # Database migrations
 │   └── requirements.txt

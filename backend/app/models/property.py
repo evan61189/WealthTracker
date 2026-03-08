@@ -164,9 +164,6 @@ class Mortgage(Base):
     )  # fixed, arm, interest_only
     notes: Mapped[str | None] = mapped_column(Text)
 
-    # Link to Plaid for auto-sync of mortgage balance
-    plaid_account_id: Mapped[str | None] = mapped_column(String(255))
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

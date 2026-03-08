@@ -36,12 +36,6 @@ class Account(Base):
     currency: Mapped[str] = mapped_column(String(3), default="USD")
     is_liability: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    # Plaid fields
-    plaid_access_token: Mapped[str | None] = mapped_column(String(255))
-    plaid_account_id: Mapped[str | None] = mapped_column(String(255))
-    plaid_item_id: Mapped[str | None] = mapped_column(String(255))
-    last_synced: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
