@@ -1,6 +1,6 @@
 import { useState, FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { auth } from "../services/api";
+import { supabase } from "../services/supabase";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -11,12 +11,14 @@ export default function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    try {
-      const res = await auth.login({ email, password });
-      localStorage.setItem("token", res.access_token);
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (authError) {
+      setError(authError.message);
+    } else {
       navigate("/");
-    } catch (err: any) {
-      setError(err.message || "Login failed");
     }
   };
 

@@ -43,9 +43,11 @@ A comprehensive wealth tracking application with advanced real estate valuation 
 
 ## Tech Stack
 
-- **Backend**: Python, FastAPI, SQLAlchemy, PostgreSQL, Alembic
+- **Backend**: Python, FastAPI, SQLAlchemy, Alembic
+- **Database**: Supabase (PostgreSQL)
+- **Auth**: Supabase Auth
 - **Frontend**: React 19, TypeScript, Vite, Recharts
-- **Auth**: JWT (python-jose + passlib/bcrypt)
+- **Hosting**: Netlify (frontend), any Python host for backend (Railway, Render, Fly.io)
 - **Bank Integration**: Plaid API
 - **Styling**: Custom CSS with dark theme
 
@@ -54,7 +56,18 @@ A comprehensive wealth tracking application with advanced real estate valuation 
 ### Prerequisites
 - Python 3.12+
 - Node.js 20+
-- PostgreSQL 15+
+- Supabase account (free tier works)
+- Netlify account (for frontend deployment)
+
+### Supabase Setup
+
+1. Create a new project at https://supabase.com
+2. From **Settings > API**, copy:
+   - Project URL → `SUPABASE_URL` / `VITE_SUPABASE_URL`
+   - `anon` public key → `SUPABASE_ANON_KEY` / `VITE_SUPABASE_ANON_KEY`
+   - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY`
+   - JWT Secret → `SUPABASE_JWT_SECRET`
+3. From **Settings > Database**, copy the connection string for `DATABASE_URL`
 
 ### Backend Setup
 
@@ -66,12 +79,9 @@ pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your database URL, Plaid keys, and secret key
+# Edit .env with your Supabase credentials and Plaid keys
 
-# Create database
-createdb wealthtracker
-
-# Run migrations
+# Run migrations against Supabase PostgreSQL
 alembic upgrade head
 
 # Start the API
@@ -82,25 +92,37 @@ uvicorn app.main:app --reload
 
 ```bash
 cd frontend
+cp .env.example .env
+# Edit .env with your Supabase URL and anon key
+
 npm install
 npm run dev
 ```
 
 The app will be available at `http://localhost:5173` with API proxied to `http://localhost:8000`.
 
+### Netlify Deployment
+
+1. Connect your repo to Netlify
+2. Set **Base directory** to `frontend`
+3. Set **Build command** to `npm run build`
+4. Set **Publish directory** to `frontend/dist`
+5. Add environment variables in Netlify dashboard:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+   - `VITE_API_URL` (your deployed backend URL)
+
 ### Plaid Setup
 
 1. Create a Plaid account at https://dashboard.plaid.com
 2. Get your `client_id` and `secret` from the Plaid dashboard
-3. Add them to your `.env` file
+3. Add them to the backend `.env` file
 4. Use `sandbox` environment for testing
 
 ## API Endpoints
 
 ### Auth
-- `POST /api/auth/register` - Create account
-- `POST /api/auth/login` - Sign in (returns JWT)
-- `GET /api/auth/me` - Current user
+- `GET /api/auth/me` - Current user profile (auto-created from Supabase session)
 
 ### Accounts
 - `GET /api/accounts` - List all accounts

@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import String, DateTime, Boolean
@@ -8,14 +7,15 @@ from app.core.database import Base
 
 
 class User(Base):
+    """Local user profile. The id is the Supabase Auth user UUID.
+    Passwords are managed entirely by Supabase Auth — not stored here.
+    """
+
     __tablename__ = "users"
 
-    id: Mapped[str] = mapped_column(
-        String, primary_key=True, default=lambda: str(uuid.uuid4())
-    )
+    id: Mapped[str] = mapped_column(String, primary_key=True)  # Supabase auth.users.id
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
-    hashed_password: Mapped[str] = mapped_column(String(255))
-    full_name: Mapped[str] = mapped_column(String(255))
+    full_name: Mapped[str] = mapped_column(String(255), default="")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)

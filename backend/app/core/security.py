@@ -1,32 +1,24 @@
-from datetime import datetime, timedelta, timezone
+"""Supabase JWT verification.
 
-from jose import JWTError, jwt
-from passlib.context import CryptContext
+The backend no longer issues its own JWTs or manages passwords.
+Supabase Auth handles all of that. We just verify the Supabase-issued
+JWT on incoming requests.
+"""
+
+import jwt
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
-
-
-def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (
-        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-
-
-def decode_access_token(token: str) -> dict | None:
+def decode_supabase_token(token: str) -> dict | None:
+    """Verify and decode a Supabase Auth JWT token."""
     try:
-        return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-    except JWTError:
+        payload = jwt.decode(
+            token,
+            settings.SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            audience="authenticated",
+        )
+        return payload
+    except (jwt.InvalidTokenError, jwt.ExpiredSignatureError):
         return None

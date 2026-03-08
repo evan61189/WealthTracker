@@ -7,13 +7,7 @@ from app.models.account import AccountType
 from app.models.property import PropertyType, LeaseType
 
 
-# ──── Auth ────────────────────────────────────────────────────────────────────
-
-
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str = Field(min_length=8)
-    full_name: str
+# ──── Auth (Supabase handles registration/login) ─────────────────────────────
 
 
 class UserResponse(BaseModel):
@@ -24,16 +18,6 @@ class UserResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
-
-
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-
-
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
 
 
 # ──── Accounts ────────────────────────────────────────────────────────────────

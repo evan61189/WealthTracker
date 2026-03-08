@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "./services/supabase";
 import App from "./App";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -11,25 +13,41 @@ import PropertyDetailPage from "./pages/PropertyDetailPage";
 import ValuationCalculator from "./pages/ValuationCalculator";
 import "./index.css";
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = localStorage.getItem("token");
-  if (!token) return <Navigate to="/login" replace />;
-  return <>{children}</>;
-}
+function Root() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) return null;
+
+  return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route
+          path="/login"
+          element={session ? <Navigate to="/" replace /> : <LoginPage />}
+        />
+        <Route
+          path="/register"
+          element={session ? <Navigate to="/" replace /> : <RegisterPage />}
+        />
         <Route
           path="/"
-          element={
-            <ProtectedRoute>
-              <App />
-            </ProtectedRoute>
-          }
+          element={session ? <App /> : <Navigate to="/login" replace />}
         >
           <Route index element={<DashboardPage />} />
           <Route path="accounts" element={<AccountsPage />} />
@@ -39,5 +57,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         </Route>
       </Routes>
     </BrowserRouter>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <Root />
   </React.StrictMode>
 );

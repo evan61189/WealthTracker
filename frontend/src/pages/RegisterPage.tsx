@@ -1,6 +1,6 @@
 import { useState, FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { auth } from "../services/api";
+import { supabase } from "../services/supabase";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -12,13 +12,17 @@ export default function RegisterPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    try {
-      await auth.register({ email, password, full_name: fullName });
-      const res = await auth.login({ email, password });
-      localStorage.setItem("token", res.access_token);
+    const { error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: fullName },
+      },
+    });
+    if (authError) {
+      setError(authError.message);
+    } else {
       navigate("/");
-    } catch (err: any) {
-      setError(err.message || "Registration failed");
     }
   };
 

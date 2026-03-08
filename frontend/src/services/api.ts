@@ -1,22 +1,32 @@
-const BASE_URL = "/api";
+import { supabase } from "./supabase";
+
+// In production (Netlify), API calls go to the backend's full URL.
+// In dev, Vite proxies /api to the backend.
+const BASE_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : "/api";
 
 async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = localStorage.getItem("token");
+  // Get the current Supabase session token
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+  if (session?.access_token) {
+    headers["Authorization"] = `Bearer ${session.access_token}`;
   }
 
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
 
   if (res.status === 401) {
-    localStorage.removeItem("token");
+    await supabase.auth.signOut();
     window.location.href = "/login";
     throw new Error("Unauthorized");
   }
@@ -30,18 +40,8 @@ async function request<T>(
   return res.json();
 }
 
-// Auth
+// Auth — Supabase handles login/register; this just fetches the local profile
 export const auth = {
-  register: (data: { email: string; password: string; full_name: string }) =>
-    request<{ id: string }>("/auth/register", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-  login: (data: { email: string; password: string }) =>
-    request<{ access_token: string }>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
   me: () => request<import("../types/api").User>("/auth/me"),
 };
 

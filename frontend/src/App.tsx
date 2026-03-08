@@ -1,11 +1,9 @@
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, NavLink } from "react-router-dom";
+import { supabase } from "./services/supabase";
 
 export default function App() {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
   };
 
   return (

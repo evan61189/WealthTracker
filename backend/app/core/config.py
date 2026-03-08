@@ -5,24 +5,33 @@ class Settings(BaseSettings):
     APP_NAME: str = "WealthTracker"
     DEBUG: bool = False
 
-    # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/wealthtracker"
-    DATABASE_URL_SYNC: str = "postgresql://postgres:postgres@localhost:5432/wealthtracker"
+    # Supabase
+    SUPABASE_URL: str = ""
+    SUPABASE_ANON_KEY: str = ""
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
+    SUPABASE_JWT_SECRET: str = ""
 
-    # JWT
-    SECRET_KEY: str = "change-me-in-production-use-openssl-rand-hex-32"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
+    # Database — use Supabase's PostgreSQL connection string
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@db.YOUR_PROJECT.supabase.co:5432/postgres"
+    DATABASE_URL_SYNC: str = "postgresql://postgres:postgres@db.YOUR_PROJECT.supabase.co:5432/postgres"
 
     # Plaid
     PLAID_CLIENT_ID: str = ""
     PLAID_SECRET: str = ""
     PLAID_ENV: str = "sandbox"  # sandbox, development, production
 
-    # CORS
+    # CORS — Netlify production URL + local dev
     CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    NETLIFY_URL: str = ""  # e.g., https://your-app.netlify.app
 
     model_config = {"env_file": ".env", "extra": "ignore"}
+
+    @property
+    def all_cors_origins(self) -> list[str]:
+        origins = list(self.CORS_ORIGINS)
+        if self.NETLIFY_URL:
+            origins.append(self.NETLIFY_URL)
+        return origins
 
 
 settings = Settings()
