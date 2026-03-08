@@ -11,6 +11,7 @@ import AccountsPage from "./pages/AccountsPage";
 import PropertiesPage from "./pages/PropertiesPage";
 import PropertyDetailPage from "./pages/PropertyDetailPage";
 import ValuationCalculator from "./pages/ValuationCalculator";
+import ProjectionsPage from "./pages/ProjectionsPage";
 import "./index.css";
 
 function Root() {
@@ -54,6 +55,7 @@ function Root() {
           <Route path="properties" element={<PropertiesPage />} />
           <Route path="properties/:id" element={<PropertyDetailPage />} />
           <Route path="calculator" element={<ValuationCalculator />} />
+          <Route path="projections" element={<ProjectionsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

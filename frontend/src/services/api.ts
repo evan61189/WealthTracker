@@ -244,9 +244,9 @@ export const dashboard = {
       supabase.from("accounts").select("account_type, balance, is_liability"),
       supabase
         .from("properties")
-        .select("purchase_price, current_market_value")
+        .select("id, purchase_price, current_market_value, ownership_percentage")
         .eq("is_active", true),
-      supabase.from("mortgages").select("current_balance"),
+      supabase.from("mortgages").select("property_id, current_balance"),
     ]);
 
     const accts = accountsRes.data ?? [];
@@ -275,12 +275,24 @@ export const dashboard = {
       .filter((a) => LIABILITY_TYPES.includes(a.account_type))
       .reduce((s, a) => s + Number(a.balance), 0);
 
+    // Build a map of property ownership percentages
+    const ownershipMap = new Map<string, number>();
+    props.forEach((p) => ownershipMap.set(p.id, Number(p.ownership_percentage ?? 100) / 100));
+
+    // Real estate value scaled by ownership %
     const realEstateValue = props.reduce(
-      (s, p) => s + Number(p.current_market_value ?? p.purchase_price),
+      (s, p) => {
+        const pct = Number(p.ownership_percentage ?? 100) / 100;
+        return s + Number(p.current_market_value ?? p.purchase_price) * pct;
+      },
       0
     );
+    // Mortgage debt scaled by the property's ownership %
     const mortgageDebt = mtgs.reduce(
-      (s, m) => s + Number(m.current_balance),
+      (s, m) => {
+        const pct = ownershipMap.get(m.property_id) ?? 1;
+        return s + Number(m.current_balance) * pct;
+      },
       0
     );
     const realEstateEquity = realEstateValue - mortgageDebt;

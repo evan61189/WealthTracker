@@ -81,6 +81,8 @@ export interface Property {
   annual_gross_rent: number;
   annual_rent_escalation: number;
   rent_escalation_type: string;
+  ownership_percentage: number;
+  ownership_notes: string | null;
   is_active: boolean;
   notes: string | null;
   created_at: string;
