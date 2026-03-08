@@ -1,92 +1,38 @@
 # WealthTracker
 
-A comprehensive wealth tracking application with advanced real estate valuation capabilities. Track your net worth across all asset categories with a powerful commercial real estate engine that handles cap rate valuations, lease type analysis (NNN, NN, Gross), rent escalation projections, and more.
+A wealth tracking app with advanced commercial real estate valuation. Track net worth across all asset categories, with a real estate engine that handles cap rate valuations, lease type analysis (NNN, NN, Gross), rent escalation projections, and more.
+
+**Stack**: React + TypeScript + Supabase + Netlify. No backend server needed.
 
 ## Features
 
-### Net Worth Dashboard
-- Complete net worth overview across all asset categories
-- Asset allocation pie chart and assets vs liabilities comparison
-- Real-time balance tracking
+- **Net Worth Dashboard** — asset allocation, pie charts, assets vs liabilities
+- **Manual Accounts** — checking, savings, credit cards, brokerage, 401(k), IRA, HSA, loans
+- **Real Estate Portfolio** — residential & commercial property tracking
+- **Commercial Valuation** — cap rate methodology with lease type expense adjustments
+- **Valuation Calculator** — standalone tool with 10-year projections, cash flow charts
+- **Tenant & Mortgage Management** — per-property tracking
 
-### Financial Accounts
-- Manual account entry for any account type
-- Historical balance snapshots for trend tracking
-- Supports: Checking, Savings, Credit Cards, Brokerage, 401(k), IRA, Roth IRA, HSA, Loans
+## Setup (Two Steps)
 
-### Real Estate Portfolio
-- **Residential properties**: Track purchase price, market value, mortgage details, equity
-- **Commercial properties**: Full income capitalization valuation engine
-  - Lease type support: NNN (Triple Net), NN (Double Net), Net, Modified Gross, Gross, Absolute Net
-  - Cap rate-based property valuation (Value = NOI / Cap Rate)
-  - Automatic NOI calculation adjusted for lease type expense responsibility
-  - Tenant management with individual lease terms and rent escalations
-  - Multiple mortgage tracking per property
-  - Cash-on-cash return and DSCR calculations
+### 1. Supabase
 
-### Valuation Calculator
-- Standalone commercial property valuation tool
-- 10-year (configurable) cash flow and value projections
-- Rent escalation modeling (fixed % or CPI-based)
-- Mortgage amortization in projections
-- Interactive charts for value, equity, and cash flow trends
-- Year-by-year detailed projection table
+1. Create a project at [supabase.com](https://supabase.com)
+2. Go to **SQL Editor** and paste the contents of `supabase/schema.sql` — click **Run**
+3. From **Settings > API**, copy your Project URL and `anon` public key
 
-### Lease Type Expense Logic
-| Expense | Gross | Modified Gross | Net | NN | NNN | Absolute Net |
-|---------|-------|---------------|-----|-----|-----|-------------|
-| Property Tax | Landlord | Landlord | Tenant | Tenant | Tenant | Tenant |
-| Insurance | Landlord | Landlord | Landlord | Tenant | Tenant | Tenant |
-| Maintenance | Landlord | Tenant | Landlord | Landlord | Tenant | Tenant |
-| Management | Landlord | Landlord | Landlord | Landlord | Landlord | Tenant |
+### 2. Netlify
 
-## Tech Stack
+1. Connect this repo to [Netlify](https://app.netlify.com)
+2. It will auto-detect settings from `netlify.toml`
+3. Add environment variables in Netlify dashboard:
+   - `VITE_SUPABASE_URL` — your Supabase project URL
+   - `VITE_SUPABASE_ANON_KEY` — your Supabase anon key
+4. Deploy
 
-- **Backend**: Python, FastAPI, SQLAlchemy, Alembic
-- **Database**: Supabase (PostgreSQL)
-- **Auth**: Supabase Auth
-- **Frontend**: React 19, TypeScript, Vite, Recharts
-- **Hosting**: Netlify (frontend), any Python host for backend (Railway, Render, Fly.io)
-- **Styling**: Custom CSS with dark theme
+That's it. Two services, both free tier.
 
-## Getting Started
-
-### Prerequisites
-- Python 3.12+
-- Node.js 20+
-- Supabase account (free tier works)
-- Netlify account (for frontend deployment)
-
-### Supabase Setup
-
-1. Create a new project at https://supabase.com
-2. From **Settings > API**, copy:
-   - Project URL → `SUPABASE_URL` / `VITE_SUPABASE_URL`
-   - `anon` public key → `SUPABASE_ANON_KEY` / `VITE_SUPABASE_ANON_KEY`
-   - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY`
-   - JWT Secret → `SUPABASE_JWT_SECRET`
-3. From **Settings > Database**, copy the connection string for `DATABASE_URL`
-
-### Backend Setup
-
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your Supabase credentials
-
-# Run migrations against Supabase PostgreSQL
-alembic upgrade head
-
-# Start the API
-uvicorn app.main:app --reload
-```
-
-### Frontend Setup
+## Local Development
 
 ```bash
 cd frontend
@@ -97,68 +43,19 @@ npm install
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173` with API proxied to `http://localhost:8000`.
-
-### Netlify Deployment
-
-1. Connect your repo to Netlify
-2. Set **Base directory** to `frontend`
-3. Set **Build command** to `npm run build`
-4. Set **Publish directory** to `frontend/dist`
-5. Add environment variables in Netlify dashboard:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-   - `VITE_API_URL` (your deployed backend URL)
-
-## API Endpoints
-
-### Auth
-- `GET /api/auth/me` - Current user profile (auto-created from Supabase session)
-
-### Accounts
-- `GET /api/accounts` - List all accounts
-- `POST /api/accounts` - Create manual account
-- `PATCH /api/accounts/:id` - Update account
-- `DELETE /api/accounts/:id` - Delete account
-- `GET /api/accounts/:id/snapshots` - Balance history
-
-### Properties
-- `GET /api/properties` - List all properties
-- `POST /api/properties` - Add property
-- `GET /api/properties/:id` - Property detail
-- `PATCH /api/properties/:id` - Update property
-- `DELETE /api/properties/:id` - Delete property
-- `POST /api/properties/:id/valuate` - Run cap rate valuation
-
-### Tenants & Mortgages
-- `GET/POST /api/properties/:id/tenants` - Manage tenants
-- `GET/POST /api/properties/:id/mortgages` - Manage mortgages
-
-### Valuation Calculator
-- `POST /api/properties/valuation/calculate` - One-time valuation
-- `POST /api/properties/valuation/project` - Multi-year projection
-
-### Dashboard
-- `GET /api/dashboard/net-worth` - Net worth summary
+Open `http://localhost:5173`.
 
 ## Project Structure
 
 ```
 WealthTracker/
-├── backend/
-│   ├── app/
-│   │   ├── api/          # Route handlers
-│   │   ├── core/         # Config, database, security
-│   │   ├── models/       # SQLAlchemy models
-│   │   ├── services/     # Business logic (valuation)
-│   │   └── main.py       # FastAPI app
-│   ├── alembic/          # Database migrations
-│   └── requirements.txt
-└── frontend/
-    ├── src/
-    │   ├── components/   # Reusable UI components
-    │   ├── pages/        # Page components
-    │   ├── services/     # API client
-    │   └── types/        # TypeScript types
-    └── package.json
+├── frontend/
+│   ├── src/
+│   │   ├── pages/        # Dashboard, Accounts, Properties, Calculator
+│   │   ├── services/     # Supabase client, valuation engine
+│   │   └── types/        # TypeScript types
+│   └── package.json
+├── supabase/
+│   └── schema.sql        # Tables + Row Level Security policies
+└── netlify.toml           # Build config
 ```

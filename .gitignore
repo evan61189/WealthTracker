@@ -1,15 +1,7 @@
-__pycache__/
-*.py[cod]
-*.egg-info/
-dist/
-build/
-venv/
-.env
-*.db
-
 node_modules/
 frontend/dist/
 .vite/
+.env
 
 .DS_Store
 *.log

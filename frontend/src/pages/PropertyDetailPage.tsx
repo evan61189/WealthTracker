@@ -1,6 +1,7 @@
 import { useState, useEffect, FormEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { properties } from "../services/api";
+import { calculateValuation } from "../services/valuation";
 import type {
   Property,
   Tenant,
@@ -42,15 +43,49 @@ export default function PropertyDetailPage() {
   }, [id]);
 
   const handleValuate = async () => {
-    if (!id) return;
-    try {
-      const result = await properties.valuate(id);
-      setValuation(result);
-      // Refresh property to get updated market value
-      properties.get(id).then(setProperty);
-    } catch (err: any) {
-      alert(err.message);
+    if (!id || !property) return;
+    if (!property.cap_rate || !property.lease_type) {
+      alert("Property must have cap_rate and lease_type for valuation");
+      return;
     }
+
+    const totalDebt = mortgages.reduce((s, m) => s + m.current_balance, 0);
+    const annualDebtService = mortgages.reduce(
+      (s, m) => s + m.monthly_payment * 12,
+      0
+    );
+    const totalCashInvested = Math.max(
+      0,
+      property.purchase_price +
+        property.closing_costs -
+        mortgages.reduce((s, m) => s + m.original_balance, 0)
+    );
+
+    const result = calculateValuation({
+      annual_gross_rent: property.annual_gross_rent,
+      lease_type: property.lease_type,
+      cap_rate: property.cap_rate,
+      vacancy_rate: property.vacancy_rate,
+      property_tax: property.annual_property_tax,
+      insurance: property.annual_insurance,
+      maintenance: property.annual_maintenance,
+      management_fee: property.annual_management_fee,
+      other_expenses: property.annual_other_expenses,
+      square_feet: property.square_feet,
+      total_debt: totalDebt,
+      annual_debt_service: annualDebtService,
+      total_cash_invested: totalCashInvested,
+    });
+    setValuation(result);
+
+    // Save to Supabase
+    await properties.valuate(id, {
+      estimated_value: result.estimated_value,
+      noi: result.noi,
+      cap_rate: result.cap_rate,
+    });
+    // Refresh property to get updated market value
+    properties.get(id).then(setProperty);
   };
 
   if (loading) return <p className="text-muted">Loading...</p>;

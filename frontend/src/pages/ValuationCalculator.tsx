@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { valuation } from "../services/api";
+import { calculateValuation, projectFutureValues } from "../services/valuation";
 import type { ValuationResult, ProjectionYear } from "../types/api";
 
 function formatCurrency(value: number): string {
@@ -55,47 +55,37 @@ export default function ValuationCalculator() {
   const update = (field: string, value: string) =>
     setForm((f) => ({ ...f, [field]: value }));
 
-  const handleCalculate = async (e: FormEvent) => {
+  const handleCalculate = (e: FormEvent) => {
     e.preventDefault();
-    try {
-      const res = await valuation.calculate({
-        annual_gross_rent: parseFloat(form.annual_gross_rent),
-        lease_type: form.lease_type,
-        cap_rate: parseFloat(form.cap_rate),
-        vacancy_rate: parseFloat(form.vacancy_rate),
-        property_tax: parseFloat(form.property_tax),
-        insurance: parseFloat(form.insurance),
-        maintenance: parseFloat(form.maintenance),
-        management_fee: parseFloat(form.management_fee),
-        other_expenses: parseFloat(form.other_expenses),
-        square_feet: parseInt(form.square_feet) || null,
-        total_debt: parseFloat(form.total_debt),
-        annual_debt_service: parseFloat(form.annual_debt_service),
-        total_cash_invested: parseFloat(form.total_cash_invested),
-      });
-      setResult(res);
+    const params = {
+      annual_gross_rent: parseFloat(form.annual_gross_rent),
+      lease_type: form.lease_type,
+      cap_rate: parseFloat(form.cap_rate),
+      vacancy_rate: parseFloat(form.vacancy_rate),
+      property_tax: parseFloat(form.property_tax),
+      insurance: parseFloat(form.insurance),
+      maintenance: parseFloat(form.maintenance),
+      management_fee: parseFloat(form.management_fee),
+      other_expenses: parseFloat(form.other_expenses),
+      square_feet: parseInt(form.square_feet) || null,
+      total_debt: parseFloat(form.total_debt),
+      annual_debt_service: parseFloat(form.annual_debt_service),
+      total_cash_invested: parseFloat(form.total_cash_invested),
+    };
 
-      const proj = await valuation.project({
-        annual_gross_rent: parseFloat(form.annual_gross_rent),
-        lease_type: form.lease_type,
-        cap_rate: parseFloat(form.cap_rate),
-        vacancy_rate: parseFloat(form.vacancy_rate),
-        property_tax: parseFloat(form.property_tax),
-        insurance: parseFloat(form.insurance),
-        maintenance: parseFloat(form.maintenance),
-        management_fee: parseFloat(form.management_fee),
-        other_expenses: parseFloat(form.other_expenses),
+    setResult(calculateValuation(params));
+
+    setProjections(
+      projectFutureValues({
+        ...params,
         annual_rent_escalation: parseFloat(form.annual_rent_escalation),
         escalation_type: form.escalation_type,
         mortgage_balance: parseFloat(form.mortgage_balance),
         monthly_mortgage_payment: parseFloat(form.monthly_mortgage_payment),
         mortgage_interest_rate: parseFloat(form.mortgage_interest_rate),
         projection_years: parseInt(form.projection_years),
-      });
-      setProjections(proj);
-    } catch (err: any) {
-      alert(err.message);
-    }
+      })
+    );
   };
 
   return (
