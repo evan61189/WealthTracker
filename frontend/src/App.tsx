@@ -27,6 +27,7 @@ export default function App() {
           <SidebarLink to="/accounts" label="Accounts" />
           <SidebarLink to="/properties" label="Real Estate" />
           <SidebarLink to="/calculator" label="Valuation Calculator" />
+          <SidebarLink to="/projections" label="Projections" />
         </div>
         <div style={{ padding: "0 16px" }}>
           <button
