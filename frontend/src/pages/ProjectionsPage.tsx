@@ -19,7 +19,7 @@ interface Assumptions {
   investmentReturnRate: number; // annual return on investment accounts
   monthlyContribution: number; // additional monthly investment contributions
   contributionGrowthRate: number; // annual increase in contributions, e.g. 0.03
-  inflationRate: number; // for reference line
+  inflationRate: number; // deflates net worth to today's dollars
 }
 
 interface ProjectionRow {
@@ -32,6 +32,7 @@ interface ProjectionRow {
   totalAssets: number;
   totalLiabilities: number;
   netWorth: number;
+  realNetWorth: number; // inflation-adjusted to today's dollars
 }
 
 // ──── Helpers ───────────────────────────────────────────────────────────────
@@ -115,7 +116,7 @@ function runProjection(
   };
 
   const y0 = snap();
-  rows.push({ year: 0, ...y0 });
+  rows.push({ year: 0, ...y0, realNetWorth: y0.netWorth });
 
   for (let year = 1; year <= assumptions.years; year++) {
     // Appreciate properties
@@ -151,7 +152,8 @@ function runProjection(
     contribution *= 1 + assumptions.contributionGrowthRate;
 
     const s = snap();
-    rows.push({ year, ...s });
+    const deflator = Math.pow(1 + assumptions.inflationRate, year);
+    rows.push({ year, ...s, realNetWorth: s.netWorth / deflator });
   }
 
   return rows;
@@ -331,7 +333,7 @@ export default function ProjectionsPage() {
             </span>
           </div>
           <div className="form-group">
-            <label>Inflation Rate (reference)</label>
+            <label>Inflation Rate</label>
             <input
               type="number"
               step="0.005"
@@ -373,10 +375,10 @@ export default function ProjectionsPage() {
           </div>
           <div className="card">
             <div className="stat-label">
-              Year {lastRow.year} RE Equity
+              Year {lastRow.year} (Today's $)
             </div>
             <div className="stat-value" style={{ fontSize: 22 }}>
-              {formatCurrencyFull(lastRow.realEstateEquity)}
+              {formatCurrencyFull(lastRow.realNetWorth)}
             </div>
           </div>
         </div>
@@ -408,10 +410,19 @@ export default function ProjectionsPage() {
             <Line
               type="monotone"
               dataKey="netWorth"
-              name="Net Worth"
+              name="Net Worth (Nominal)"
               stroke="#22c55e"
               strokeWidth={3}
               dot={false}
+            />
+            <Line
+              type="monotone"
+              dataKey="realNetWorth"
+              name="Net Worth (Today's $)"
+              stroke="#22c55e"
+              strokeWidth={2}
+              dot={false}
+              strokeDasharray="6 3"
             />
             <Line
               type="monotone"
@@ -512,6 +523,7 @@ export default function ProjectionsPage() {
                 <th className="text-right">Investments</th>
                 <th className="text-right">Cash/Other</th>
                 <th className="text-right">Net Worth</th>
+                <th className="text-right">In Today's $</th>
               </tr>
             </thead>
             <tbody>
@@ -544,6 +556,9 @@ export default function ProjectionsPage() {
                     }}
                   >
                     {formatCurrencyFull(row.netWorth)}
+                  </td>
+                  <td className="text-right text-muted">
+                    {formatCurrencyFull(row.realNetWorth)}
                   </td>
                 </tr>
               ))}
