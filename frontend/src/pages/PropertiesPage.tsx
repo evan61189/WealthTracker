@@ -1,6 +1,7 @@
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, useRef, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { properties } from "../services/api";
+import { parsePropertiesCSV, type ParsedProperty } from "../services/csvParser";
 import type { Property, PropertyType, LeaseType } from "../types/api";
 
 const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
@@ -40,6 +41,7 @@ export default function PropertiesPage() {
   const navigate = useNavigate();
   const [propertyList, setPropertyList] = useState<Property[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadProperties = () => {
@@ -65,9 +67,17 @@ export default function PropertiesPage() {
           <h1>Real Estate</h1>
           <p>Manage your property portfolio</p>
         </div>
-        <button className="btn-primary" onClick={() => setShowModal(true)}>
-          Add Property
-        </button>
+        <div className="flex gap-8">
+          <button
+            className="btn-secondary"
+            onClick={() => setShowUpload(true)}
+          >
+            Upload CSV
+          </button>
+          <button className="btn-primary" onClick={() => setShowModal(true)}>
+            Add Property
+          </button>
+        </div>
       </div>
 
       <div className="grid-3 mb-24">
@@ -106,6 +116,7 @@ export default function PropertiesPage() {
                 <th className="text-right">Value</th>
                 <th className="text-right">Annual Rent</th>
                 <th className="text-right">Cap Rate</th>
+                <th className="text-right">Ownership</th>
                 <th></th>
               </tr>
             </thead>
@@ -156,6 +167,12 @@ export default function PropertiesPage() {
                       ? `${(prop.cap_rate * 100).toFixed(1)}%`
                       : "-"}
                   </td>
+                  <td className="text-right">
+                    {prop.ownership_percentage != null &&
+                    prop.ownership_percentage < 100
+                      ? `${prop.ownership_percentage}%`
+                      : "100%"}
+                  </td>
                   <td>
                     <button
                       className="btn-danger btn-sm"
@@ -184,6 +201,230 @@ export default function PropertiesPage() {
           }}
         />
       )}
+
+      {showUpload && (
+        <UploadCSVModal
+          onClose={() => setShowUpload(false)}
+          onImported={() => {
+            setShowUpload(false);
+            loadProperties();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function UploadCSVModal({
+  onClose,
+  onImported,
+}: {
+  onClose: () => void;
+  onImported: () => void;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [parsed, setParsed] = useState<ParsedProperty[]>([]);
+  const [importing, setImporting] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(0);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError("");
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const text = ev.target?.result as string;
+        const results = parsePropertiesCSV(text);
+        if (results.length === 0) {
+          setError("No data rows found. Check that your CSV has headers and data.");
+          return;
+        }
+        setParsed(results);
+      } catch {
+        setError("Failed to parse CSV file.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleImport = async () => {
+    setImporting(true);
+    setError("");
+    setDone(0);
+    const today = new Date().toISOString().split("T")[0];
+
+    try {
+      for (const row of parsed) {
+        // Parse ownership percentage from the "% ownership & who" field
+        let ownershipPct = 100;
+        let ownershipNotes = row.ownership;
+        const pctMatch = row.ownership.match(/([\d.]+)\s*%/);
+        if (pctMatch) {
+          ownershipPct = parseFloat(pctMatch[1]);
+        }
+
+        // Create property
+        const prop = await properties.create({
+          name: row.holdingCompany,
+          property_type: "residential_rental",
+          address: row.address,
+          city: row.city || "-",
+          state: row.state || "-",
+          zip_code: row.zipCode || "-",
+          purchase_price: row.value,
+          purchase_date: today,
+          current_market_value: row.value,
+          ownership_percentage: ownershipPct,
+          ownership_notes: ownershipNotes || null,
+        });
+
+        // Create mortgage if there's debt
+        if (row.debtBalance > 0 || row.lender) {
+          await properties.createMortgage(prop.id, {
+            lender: row.lender || "Unknown",
+            original_balance: row.debtBalance,
+            current_balance: row.debtBalance,
+            interest_rate: row.rate,
+            monthly_payment: row.monthlyPayment,
+            loan_term_months: 360, // default 30yr
+            start_date: today,
+            maturity_date: row.maturity || today,
+            is_primary: true,
+            loan_type: "fixed",
+          });
+        }
+
+        setDone((d) => d + 1);
+      }
+      onImported();
+    } catch (err: any) {
+      setError(err.message);
+      setImporting(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div
+        className="modal"
+        style={{ maxWidth: 900 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2>Upload Properties from CSV</h2>
+        <p className="text-muted" style={{ marginBottom: 16, fontSize: 13 }}>
+          Expected columns: Holding Company, Address, Value, Debt Balance,
+          Monthly loan payment, Lender, Rate, Maturity, % ownership & who
+        </p>
+
+        {error && (
+          <div style={{ color: "var(--red)", marginBottom: 16, fontSize: 13 }}>
+            {error}
+          </div>
+        )}
+
+        {parsed.length === 0 ? (
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.txt"
+              onChange={handleFile}
+              style={{ display: "none" }}
+            />
+            <button
+              className="btn-primary"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Choose CSV File
+            </button>
+          </div>
+        ) : (
+          <div>
+            <div style={{ marginBottom: 16, fontSize: 14 }}>
+              <strong>{parsed.length}</strong> properties found.
+              {importing && (
+                <span className="text-muted">
+                  {" "}
+                  Importing... {done}/{parsed.length}
+                </span>
+              )}
+            </div>
+
+            <div style={{ overflowX: "auto", maxHeight: 400 }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Holding Company</th>
+                    <th>Address</th>
+                    <th className="text-right">Value</th>
+                    <th className="text-right">Debt</th>
+                    <th className="text-right">Payment</th>
+                    <th>Lender</th>
+                    <th className="text-right">Rate</th>
+                    <th>Maturity</th>
+                    <th>Ownership</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {parsed.map((row, i) => (
+                    <tr key={i}>
+                      <td style={{ fontWeight: 500 }}>{row.holdingCompany}</td>
+                      <td className="text-muted" style={{ fontSize: 12 }}>
+                        {row.address}
+                        {row.city && `, ${row.city}`}
+                        {row.state && `, ${row.state}`}
+                      </td>
+                      <td className="text-right">
+                        {formatCurrency(row.value)}
+                      </td>
+                      <td className="text-right text-red">
+                        {row.debtBalance
+                          ? formatCurrency(row.debtBalance)
+                          : "-"}
+                      </td>
+                      <td className="text-right">
+                        {row.monthlyPayment
+                          ? formatCurrency(row.monthlyPayment)
+                          : "-"}
+                      </td>
+                      <td className="text-muted">{row.lender || "-"}</td>
+                      <td className="text-right">
+                        {row.rate
+                          ? `${(row.rate * 100).toFixed(2)}%`
+                          : "-"}
+                      </td>
+                      <td className="text-muted">{row.maturity || "-"}</td>
+                      <td className="text-muted" style={{ fontSize: 12 }}>
+                        {row.ownership || "-"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              className="flex gap-8"
+              style={{ justifyContent: "flex-end", marginTop: 16 }}
+            >
+              <button className="btn-secondary" onClick={onClose}>
+                Cancel
+              </button>
+              <button
+                className="btn-primary"
+                onClick={handleImport}
+                disabled={importing}
+              >
+                {importing
+                  ? `Importing ${done}/${parsed.length}...`
+                  : `Import ${parsed.length} Properties`}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

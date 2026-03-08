@@ -55,6 +55,8 @@ CREATE TABLE IF NOT EXISTS properties (
   annual_gross_rent numeric(12,2) NOT NULL DEFAULT 0,
   annual_rent_escalation numeric(5,3) NOT NULL DEFAULT 0.03,
   rent_escalation_type varchar(20) NOT NULL DEFAULT 'fixed',
+  ownership_percentage numeric(5,2) NOT NULL DEFAULT 100,
+  ownership_notes varchar(500),
   is_active boolean NOT NULL DEFAULT true,
   notes text,
   created_at timestamptz NOT NULL DEFAULT now(),
